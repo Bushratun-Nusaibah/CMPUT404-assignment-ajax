@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width" />
     <meta name="license" content="
         Copyright 2013 Abram Hindle
+        Copyright 2022 Bushratun Nusaibah
         
         Licensed under the Apache License, Version 2.0 (the "License");
         you may not use this file except in compliance with the License.
@@ -39,7 +40,9 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
             try {
                 if (xhr.status==200) {
                     //XXX: parse some JSON from the request!
+                    jsonResponse = JSON.parse(xhr.responseText)
                     //XXX: Pass the data to the callback!
+                    callback(jsonResponse)
                 }
             } 
             catch(e) {
@@ -48,8 +51,13 @@ function sendJSONXMLHTTPRequest(url, objects, callback) {
         }
     };
     //XXX: POST to a URL
+    xhr.open("POST", url, true)
+
     //XXX: set the mimetype and the accept headers!
+    xhr.setRequestHeader("Content-type", "application/json");
+    xhr.setRequestHeader("Accept", "application/json");
     // Remember to use application/json !
+    xhr.send(JSON.stringify(objects))
 }
 
 
@@ -138,6 +146,9 @@ function addEntity(entity, data) {
     world[entity] = data;
     drawNextFrame(); // (but should we?)
     //XXX: Send a XHTML Request that updates the entity you just  modified!
+    var url = "/entity/" + entity;
+
+    sendJSONXMLHTTPRequest(url, data, (response) => {});
 
 }
 
@@ -262,7 +273,27 @@ mouse.mousedraggers.push(function(x,y,clicked,e) {
 
 function update() {
     //XXX: TODO Get the world from the webservice using a XMLHTTPRequest
+    var xmlRequest = new XMLHttpRequest();
+    xmlRequest.onreadystatechange = function () {
+        if (xmlRequest.readyState==4) {
+            try {
+                if (xmlRequest.status==200) {
+                    world = JSON.parse(xmlRequest .responseText);
+                    drawNextFrame();
+                }
+            } 
+            catch(e) {
+                alert('Error: ' + e.name);
+            }
+        }
+    };
+
+    xmlRequest.open("GET", "/world");
+    xmlRequest.setRequestHeader("Accept", "application/json");
+    xmlRequest.send(null);
+						   
     drawFrame();
+    
 }
 
 // 30 frames per second
